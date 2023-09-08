@@ -1,4 +1,8 @@
-use std::{env, error::Error, fs};
+use std::{
+    env::{self, Args},
+    error::Error,
+    fs,
+};
 
 //tests
 #[cfg(test)]
@@ -74,12 +78,33 @@ impl Config {
         }
     }
 
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Needs two arguments");
+    pub fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        // if args.len() < 3 {
+        //     return Err("Needs two arguments");
+        // }
+        // let query = args[1].clone();
+        // let file_path = args[2].clone();
+
+        args.next();
+        let query;
+        let file_path;
+
+        match args.next() {
+            Some(arg) => query = arg,
+            None => return Err("No query string provided"),
+        };
+
+        match args.next() {
+            Some(arg) => file_path = arg,
+            None => return Err("No file path found"),
         }
-        let query = args[1].clone();
-        let file_path = args[2].clone();
+
+        // let file_path = args.next().unwrap(); //unwrap will panic
+
+        // if let file_path=args.next()  {
+        //     None=>return Err("No file path provided")
+        // }
+
         //check if env is set
         let ignore_case = env::var("IGNORE_CASE").is_ok();
         Ok(Config {
@@ -88,6 +113,21 @@ impl Config {
             ignore_case,
         })
     }
+    // pub fn build(args: &[String]) -> Result<Config, &'static str> {
+    //     if args.len() < 3 {
+    //         return Err("Needs two arguments");
+    //     }
+    //     let query = args[1].clone();
+    //     let file_path = args[2].clone();
+
+    //     //check if env is set
+    //     let ignore_case = env::var("IGNORE_CASE").is_ok();
+    //     Ok(Config {
+    //         query,
+    //         file_path,
+    //         ignore_case,
+    //     })
+    // }
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -111,14 +151,26 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut v: Vec<&str> = Vec::new();
-    for line in contents.lines() {
-        //do something with line
-        if line.contains(query) {
-            v.push(line);
-        }
-    }
-    v
+    // let mut v: Vec<&str> = Vec::new();
+    // for line in contents.lines() {
+    //     //do something with line
+    //     if line.contains(query) {
+    //         v.push(line);
+    //     }
+    // }
+
+    //using functional programming style to minimize the amount of mutable state
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
+    // for line in contents.lines() {
+    //     //do something with line
+    //     if line.contains(query) {
+    //         v.push(line);
+    //     }
+    // }
+    // v
 }
 
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
